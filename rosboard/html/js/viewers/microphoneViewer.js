@@ -52,7 +52,7 @@ const mediaStream = navigator.mediaDevices.getUserMedia({ audio: true })
     source.connect(processor);
 
     processor.connect(audioContext.destination);
-    const socket = new WebSocket('ws://localhost:1234'); // Create a WebSocket to communicate with the Python server
+    const socket = new WebSocket('wss://192.168.93.128:1234'); // Create a WebSocket to communicate with the Python server
 
     socket.onopen = () => {
         console.log("WebSocket connection established");
