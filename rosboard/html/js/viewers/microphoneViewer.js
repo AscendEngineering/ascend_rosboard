@@ -1,9 +1,9 @@
 const video = document.getElementById('video')
+const socket = new WebSocket('ws://localhost:1234'); // Create a WebSocket to communicate with the Python server
+
 
 function sendAudioData(inputData) {
 
-
-    const socket = new WebSocket('ws://localhost:1234'); // Create a WebSocket to communicate with the Python server
 
     const byteArray = new Float32Array(inputData.length);
     for (let i = 0; i < inputData.length; i++) {
