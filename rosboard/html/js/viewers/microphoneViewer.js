@@ -1,10 +1,9 @@
 const video = document.getElementById('video')
-const socket = new WebSocket('ws://localhost:1234'); // Create a WebSocket to communicate with the Python server
 
 
-function sendAudioData(inputData) {
+function sendAudioData(inputData, socket) {
 
-
+    
     const byteArray = new Float32Array(inputData.length);
     for (let i = 0; i < inputData.length; i++) {
       byteArray[i] = inputData[i];
@@ -17,11 +16,18 @@ function sendAudioData(inputData) {
     });
     console.log('buffer b4');
 
-    socket.onopen = () => {
-        console.log("WebSocket connection established");
-        socket.send(buffer);
-      };
+    socket.send(buffer);
+    // });
+
+    // Listen for messages
+    // socket.addEventListener("message", (event) => {
+    //   console.log("Message from server ", event.data);
+    // });
       
+    //   socket.onmessage = () => {
+    //     console.log("WebSocket connection established");
+
+    //   };
     socket.onclose = () => {
         console.log("WebSocket connection closed");
     };
@@ -35,24 +41,32 @@ function startup()
 {   
 console.log('hello')
 const audioContext = new AudioContext();
+///////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////
 const mediaStream = navigator.mediaDevices.getUserMedia({ audio: true })
   .then(stream => {
-    video.srcObject = stream;
+    // video.srcObject = stream;
     const source = audioContext.createMediaStreamSource(stream);
     const processor = audioContext.createScriptProcessor(4096, 1, 1);  
     source.connect(processor);
 
     processor.connect(audioContext.destination);
+    const socket = new WebSocket('ws://localhost:1234'); // Create a WebSocket to communicate with the Python server
+
+    socket.onopen = () => {
+        console.log("WebSocket connection established");
+      };
 
     processor.addEventListener('audioprocess', event => {
         const inputData = event.inputBuffer.getChannelData(0);
         // console.log(inputData);
         // console.log('fml')
-        sendAudioData(inputData);
+        sendAudioData(inputData, socket);
     })
   })
   .catch(error => {
     console.log('getUserMedia error:', fucked);
   });
 }
-window.addEventListener('load', startup, false);  
+// window.addEventListener('load', startup, false);  
