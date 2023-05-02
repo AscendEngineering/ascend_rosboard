@@ -26,6 +26,7 @@ from rosboard.subscribers.system_stats_subscriber import SystemStatsSubscriber
 from rosboard.subscribers.dummy_subscriber import DummySubscriber
 from rosboard.handlers import ROSBoardSocketHandler, NoCacheStaticFileHandler
 
+
 class ROSBoardNode(object):
     instance = None
     def __init__(self, node_name = "rosboard_node"):
@@ -72,14 +73,20 @@ class ROSBoardNode(object):
                 (r"/(.*)", NoCacheStaticFileHandler, {
                     "path": tornado_settings.get("static_path"),
                     "default_filename": "index.html"
-                }),
+                }),    
         ]
 
         self.event_loop = None
         self.tornado_application = tornado.web.Application(tornado_handlers, **tornado_settings)
+# #################################################################################
+        self.http_server = tornado.httpserver.HTTPServer(self.tornado_application, ssl_options={
+            "certfile": "trtest+3.pem",
+            "keyfile": "trtest+3-key.pem",
+        })
+######################################
         asyncio.set_event_loop(asyncio.new_event_loop())
         self.event_loop = tornado.ioloop.IOLoop()
-        self.tornado_application.listen(self.port)
+        self.http_server.listen(self.port)
 
         # allows tornado to log errors to ROS
         self.logwarn = rospy.logwarn
