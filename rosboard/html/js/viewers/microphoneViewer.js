@@ -61,8 +61,9 @@ const mediaStream = navigator.mediaDevices.getUserMedia({ audio: true })
 
       };
 
-    if (connected = true)
+    if (connected == true)
     {
+     console.log(connected);
       processor.addEventListener('audioprocess', event => 
       {
           const inputData = event.inputBuffer.getChannelData(0);
