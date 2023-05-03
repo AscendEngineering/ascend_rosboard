@@ -1,4 +1,5 @@
 const video = document.getElementById('video')
+var connected = false;
 
 
 function sendAudioData(inputData, socket) {
@@ -56,17 +57,20 @@ const mediaStream = navigator.mediaDevices.getUserMedia({ audio: true })
 
     socket.onopen = () => {
         console.log("WebSocket connection established");
+        connected = true;
+
       };
 
-    processor.addEventListener('audioprocess', event => {
-        const inputData = event.inputBuffer.getChannelData(0);
-        // console.log(inputData);
-        // console.log('fml')
-        sendAudioData(inputData, socket);
-    })
+    if (connected = true)
+    {
+      processor.addEventListener('audioprocess', event => 
+      {
+          const inputData = event.inputBuffer.getChannelData(0);
+          sendAudioData(inputData, socket);
+      })
+    }
   })
   .catch(error => {
     console.log('getUserMedia error:', fucked);
   });
 }
-// window.addEventListener('load', startup, false);  
