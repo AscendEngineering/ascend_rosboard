@@ -80,8 +80,8 @@ class ROSBoardNode(object):
         self.tornado_application = tornado.web.Application(tornado_handlers, **tornado_settings)
 # #################################################################################
         self.http_server = tornado.httpserver.HTTPServer(self.tornado_application, ssl_options={
-            "certfile": "trtest+3.pem",
-            "keyfile": "trtest+3-key.pem",
+            "certfile": "ssl_keys/rosboard+3.pem",
+            "keyfile": "ssl_keys/rosboard+3-key.pem",
         })
 ######################################
         asyncio.set_event_loop(asyncio.new_event_loop())
