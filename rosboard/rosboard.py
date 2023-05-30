@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import asyncio
 import importlib
 import os
@@ -7,6 +8,8 @@ import threading
 import time
 import tornado, tornado.web, tornado.websocket
 import traceback
+
+
 
 if os.environ.get("ROS_VERSION") == "1":
     import rospy # ROS1
@@ -364,7 +367,24 @@ class ROSBoardNode(object):
             [ROSBoardSocketHandler.MSG_MSG, ros_msg_dict]
         )
 
+async def run(cmd):
+    proc = await asyncio.create_subprocess_shell(
+        cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE)
+
+    stdout, stderr = await proc.communicate()
+
+    print(f'[{cmd!r} exited with {proc.returncode}]')
+    if stdout:
+        print(f'[stdout]\n{stdout.decode()}')
+    if stderr:
+        print(f'[stderr]\n{stderr.decode()}')
+
+
 def main(args=None):
+    print("HELLO")
+    print("HELLO")
     ROSBoardNode().start()
 
 if __name__ == '__main__':
