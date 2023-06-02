@@ -96,7 +96,7 @@ stream_out = None
 def createAudioOutputStream():
     print("Creating audio output stream (for client to server)")
     p = pyaudio.PyAudio()
-    chunk = 8192  # Number of audio samples per chunk
+    chunk = 256  # Number of audio samples per chunk
     format = pyaudio.paFloat32  # Audio format
     channels = 1  # Number of audio channels (mono)
     rate = 48000  # Sample rate (Hz)
