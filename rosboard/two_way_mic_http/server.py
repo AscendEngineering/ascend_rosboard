@@ -96,10 +96,10 @@ stream_out = None
 def createAudioOutputStream():
     print("Creating audio output stream (for client to server)")
     p = pyaudio.PyAudio()
-    chunk = 256  # Number of audio samples per chunk
+    chunk = 8192  # Number of audio samples per chunk
     format = pyaudio.paFloat32  # Audio format
     channels = 1  # Number of audio channels (mono)
-    rate = 48000  # Sample rate (Hz)
+    rate = 44100  # Sample rate (Hz)
     global stream_out
     stream_out = p.open(format=format,
                         channels=channels,
@@ -185,7 +185,8 @@ async def offer(request):
         log_info("Track %s received", track.kind)
 
         if track.kind == "audio":
-            pc.addTrack(SystemMic())
+            pass
+            #pc.addTrack(SystemMic())
             #pc.addTrack(SystemMic())
             #recorder.addTrack(track)
 

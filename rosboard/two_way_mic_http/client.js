@@ -144,7 +144,7 @@ function start() {
             const source = audioContext.createMediaStreamSource(stream);
 
             // Create an AudioScriptProcessorNode to process the audio data
-            const bufferSize = 4096; // Adjust buffer size according to your needs
+            const bufferSize = 1024; // Adjust buffer size according to your needs
             const processor = audioContext.createScriptProcessor(bufferSize, 1, 1);
 
             processor.connect(audioContext.destination);
