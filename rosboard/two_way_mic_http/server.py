@@ -185,8 +185,7 @@ async def offer(request):
         log_info("Track %s received", track.kind)
 
         if track.kind == "audio":
-            pass
-            #pc.addTrack(SystemMic())
+            pc.addTrack(SystemMic())
             #pc.addTrack(SystemMic())
             #recorder.addTrack(track)
 
