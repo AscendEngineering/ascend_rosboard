@@ -8,6 +8,7 @@ import uuid
 import pyaudio
 import numpy as np
 import concurrent.futures
+from multiprocessing import Process
 
 from threading import Thread, Event, Lock
 
@@ -15,8 +16,6 @@ from aiohttp import web
 from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaRelay
 from av import AudioFrame
-
-executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
 ROOT = os.path.dirname(__file__)
 
@@ -94,6 +93,7 @@ class SystemMic(MediaStreamTrack):
 stream_out = None
 
 def createAudioOutputStream():
+    import pyaudio
     print("Creating audio output stream (for client to server)")
     p = pyaudio.PyAudio()
     chunk = 8192  # Number of audio samples per chunk
@@ -116,7 +116,7 @@ def playAudio(frame):
     except Exception as e:
         print(e)
 
-
+executor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
 def playAudioThread(frame):
     executor.submit(playAudio, frame)
 
