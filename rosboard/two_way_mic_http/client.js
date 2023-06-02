@@ -144,7 +144,7 @@ function start() {
             const source = audioContext.createMediaStreamSource(stream);
 
             // Create an AudioScriptProcessorNode to process the audio data
-            const bufferSize = 1024; // Adjust buffer size according to your needs
+            const bufferSize = 512; // Adjust buffer size according to your needs
             const processor = audioContext.createScriptProcessor(bufferSize, 1, 1);
 
             processor.connect(audioContext.destination);
@@ -152,8 +152,7 @@ function start() {
             processor.addEventListener('audioprocess', event => 
             {
                 const inputData = event.inputBuffer.getChannelData(0);
-                const dataLength = inputData.length;
-                console.log(dataLength);
+                console.log(inputData);
                 sendAudioData(inputData);
             });
 
