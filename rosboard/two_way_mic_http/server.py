@@ -7,13 +7,16 @@ import ssl
 import uuid
 import pyaudio
 import numpy as np
+import concurrent.futures
 
 from threading import Thread, Event, Lock
 
 from aiohttp import web
 from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
-from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, MediaRelay
+from aiortc.contrib.media import MediaRelay
 from av import AudioFrame
+
+executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
 ROOT = os.path.dirname(__file__)
 
@@ -55,9 +58,7 @@ class SystemMic(MediaStreamTrack):
     def capture(self):
         print("System Mic Capture Started")
         while True:
-            print("Capturing")
             data  = np.fromstring(self.stream.read(self.CHUNK),dtype=np.int32)
-            print(data)
             
             with self.micDataLock:
                 self.micData = data
@@ -90,23 +91,34 @@ class SystemMic(MediaStreamTrack):
 
 
 
+stream_out = None
 
-p = pyaudio.PyAudio()
-chunk = 8192  # Number of audio samples per chunk
-format = pyaudio.paFloat32  # Audio format
-channels = 1  # Number of audio channels (mono)
-rate = 48000  # Sample rate (Hz)
-stream_out = p.open(format=format,
-                    channels=channels,
-                    rate=rate,
-                    output=True,
-                    frames_per_buffer=chunk)
-async def playAudio(frame):
+def createAudioOutputStream():
+    print("Creating audio output stream (for client to server)")
+    p = pyaudio.PyAudio()
+    chunk = 8192  # Number of audio samples per chunk
+    format = pyaudio.paFloat32  # Audio format
+    channels = 1  # Number of audio channels (mono)
+    rate = 48000  # Sample rate (Hz)
+    global stream_out
+    stream_out = p.open(format=format,
+                        channels=channels,
+                        rate=rate,
+                        output=True,
+                        frames_per_buffer=chunk)
+    
+def playAudio(frame):
     print("Play audio")
     try:
+        if(stream_out is None):
+            createAudioOutputStream()
         stream_out.write(frame)
     except Exception as e:
         print(e)
+
+
+def playAudioThread(frame):
+    executor.submit(playAudio, frame)
 
     
     '''
@@ -153,19 +165,13 @@ async def offer(request):
     log_info("Created for %s", request.remote)
 
     
-    recorder = MediaBlackhole()
-
-    
     
 
     @pc.on("datachannel")
-    async def on_datachannel(channel):
+    def on_datachannel(channel):
         @channel.on("message")
-        async def on_message(message):
-            if isinstance(message, str) and message.startswith("ping"):
-                channel.send("pong" + message[4:])
-            else: 
-                await playAudio(message)
+        def on_message(message):
+                playAudioThread(message)
 
     @pc.on("connectionstatechange")
     async def on_connectionstatechange():
@@ -179,18 +185,17 @@ async def offer(request):
         log_info("Track %s received", track.kind)
 
         if track.kind == "audio":
-            pc.addTrack(SystemMic())
+            pass
+            #pc.addTrack(SystemMic())
             #pc.addTrack(SystemMic())
             #recorder.addTrack(track)
 
         @track.on("ended")
         async def on_ended():
             log_info("Track %s ended", track.kind)
-            await recorder.stop()
 
     # handle offer
     await pc.setRemoteDescription(offer)
-    await recorder.start()
 
     # send answer
     answer = await pc.createAnswer()

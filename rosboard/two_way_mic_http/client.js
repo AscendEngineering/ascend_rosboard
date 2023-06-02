@@ -152,7 +152,6 @@ function start() {
             processor.addEventListener('audioprocess', event => 
             {
                 const inputData = event.inputBuffer.getChannelData(0);
-                console.log(inputData);
                 sendAudioData(inputData);
             });
 
