@@ -92,6 +92,7 @@ class SystemMic(MediaStreamTrack):
 
 
 def createAudioOutputStream():
+    import pyaudio
     print("Creating audio output stream (for client to server)")
     p = pyaudio.PyAudio()
     chunk = 8192  # Number of audio samples per chunk
@@ -102,6 +103,7 @@ def createAudioOutputStream():
                         channels=channels,
                         rate=rate,
                         output=True,
+                        output_device_index=0,
                         frames_per_buffer=chunk)
     return stream_out
     
