@@ -8,7 +8,7 @@ import uuid
 import pyaudio
 import numpy as np
 import concurrent.futures
-from multiprocessing import Process
+import multiprocessing
 
 from threading import Thread, Event, Lock
 
@@ -90,55 +90,48 @@ class SystemMic(MediaStreamTrack):
 
 
 
-stream_out = None
 
 def createAudioOutputStream():
-    import pyaudio
     print("Creating audio output stream (for client to server)")
     p = pyaudio.PyAudio()
     chunk = 8192  # Number of audio samples per chunk
     format = pyaudio.paFloat32  # Audio format
     channels = 1  # Number of audio channels (mono)
     rate = 44100  # Sample rate (Hz)
-    global stream_out
     stream_out = p.open(format=format,
                         channels=channels,
                         rate=rate,
                         output=True,
                         frames_per_buffer=chunk)
+    return stream_out
     
-def playAudio(frame):
-    print("Play audio")
-    try:
-        if(stream_out is None):
-            createAudioOutputStream()
-        stream_out.write(frame)
-    except Exception as e:
-        print(e)
+def playAudio(frame_queue):
+    stream_out = None
+    while True:
+        frame = frame_queue.get()  # Get audio frame from the frame_queue
+        if frame is None:
+            print("No frame currently")
+        elif stream_out is None:
+            stream_out = createAudioOutputStream()
+        else:
+            print("Play audio")
+            try:
+                stream_out.write(frame)
+            except Exception as e:
+                print(e)
 
-executor = concurrent.futures.ProcessPoolExecutor(max_workers=1)
-def playAudioThread(frame):
-    executor.submit(playAudio, frame)
-
-    
-    '''
-    # Assuming you have received the audio data as a list or array of floats
-    frame_of_audio_data = np.array(frame, dtype=np.float32)
-    
-    # Convert the float array to bytes
-    audio_bytes = frame_of_audio_data.tobytes()
-    
-    # Create an AudioSegment from the audio data
-    audio_segment = AudioSegment(
-        data=audio_bytes,
-        sample_width=4,  # Assuming the float array is 32-bit float (4 bytes per float)
-        frame_rate=44100,  # Adjust the frame rate according to your audio data
-        channels=1  # Adjust the number of channels according to your audio data
-    )
-
-    # Play the audio segment
-    play(audio_segment)
-    '''
+frame_queue = multiprocessing.Queue()  # Queue to hold audio frames
+started = False
+def playAudioProcess(frame):
+    global frame_queue
+    global started
+    if(not started):
+        started = True
+        audio_process = multiprocessing.Process(target=playAudio, args=(frame_queue,)) # Create audio process
+        audio_process.start() # Start audio process
+    print(frame_queue.qsize())
+    frame_queue.put(frame) # Put audio frame in frame_queue
+    print(frame_queue.qsize())
 
 async def index(request):
     content = open(os.path.join(ROOT, "index.html"), "r").read()
@@ -171,7 +164,7 @@ async def offer(request):
     def on_datachannel(channel):
         @channel.on("message")
         def on_message(message):
-                playAudioThread(message)
+                playAudioProcess(message)
 
     @pc.on("connectionstatechange")
     async def on_connectionstatechange():
