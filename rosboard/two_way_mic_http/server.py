@@ -88,22 +88,42 @@ class SystemMic(MediaStreamTrack):
         self.captureThread.kill()
 
 
+# We have to manually find output audio device ID because of 
+# multiprocessing limitations of pyaudio
+def find_audio_device(pyaudio_object, device_name):
+    device_number = None
+    for i in range(pyaudio_object.get_device_count()):
+        info = pyaudio_object.get_device_info_by_index(i)
+        if info['name'] == device_name:
+            device_number = i
+            break
+    
+    if device_number is None:
+        print("Could not find device index for device named: " + device_name + " using default device of index 0.")
+        device_number = 0
 
+    return device_number
 
 
 def createAudioOutputStream():
     import pyaudio
     print("Creating audio output stream (for client to server)")
     p = pyaudio.PyAudio()
+
+    # Find audio output device ID
+    device_name = "USB PnP Audio Device: Audio (hw:2,0)"
+
+    output_index = find_audio_device(p, device_name)
+
     chunk = 8192  # Number of audio samples per chunk
     format = pyaudio.paFloat32  # Audio format
     channels = 1  # Number of audio channels (mono)
-    rate = 44100  # Sample rate (Hz)
+    rate = 48000  # Sample rate (Hz)
     stream_out = p.open(format=format,
                         channels=channels,
                         rate=rate,
                         output=True,
-                        output_device_index=0,
+                        output_device_index=output_index,
                         frames_per_buffer=chunk)
     return stream_out
     
