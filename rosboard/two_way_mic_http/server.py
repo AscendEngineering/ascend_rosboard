@@ -9,6 +9,7 @@ import pyaudio
 import numpy as np
 import concurrent.futures
 import multiprocessing
+import time
 
 from threading import Thread, Event, Lock
 
@@ -65,10 +66,12 @@ class SystemMic(MediaStreamTrack):
     
         
     async def recv(self):
+        await asyncio.sleep(0.01)
         print("recv")
         newMicData = None
             
         self.newMicDataEvent.wait()
+
 
         with self.micDataLock:
             data  = self.micData
@@ -128,32 +131,37 @@ def createAudioOutputStream():
     return stream_out
     
 def playAudio(frame_queue):
+    print("Playing audio")
     stream_out = None
     while True:
-        frame = frame_queue.get()  # Get audio frame from the frame_queue
-        if frame is None:
-            print("No frame currently")
-        elif stream_out is None:
+
+        try:
+            frame = frame_queue.get(block=False)  # Get audio frame from the frame_queue
+        except Exception as e:
+            #print("No frame currently")
+            continue
+
+        if stream_out is None:
             stream_out = createAudioOutputStream()
         else:
             print("Play audio")
             try:
+                print(frame_queue.qsize())
                 stream_out.write(frame)
             except Exception as e:
                 print(e)
 
 frame_queue = multiprocessing.Queue()  # Queue to hold audio frames
 started = False
+
 def playAudioProcess(frame):
-    global frame_queue
-    global started
+    global frame_queue, started
     if(not started):
+        print("Starting audio process")
         started = True
         audio_process = multiprocessing.Process(target=playAudio, args=(frame_queue,)) # Create audio process
         audio_process.start() # Start audio process
-    print(frame_queue.qsize())
     frame_queue.put(frame) # Put audio frame in frame_queue
-    print(frame_queue.qsize())
 
 async def index(request):
     content = open(os.path.join(ROOT, "index.html"), "r").read()
@@ -186,7 +194,7 @@ async def offer(request):
     def on_datachannel(channel):
         @channel.on("message")
         def on_message(message):
-                playAudioProcess(message)
+            playAudioProcess(message)
 
     @pc.on("connectionstatechange")
     async def on_connectionstatechange():
