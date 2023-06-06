@@ -3,25 +3,31 @@
 import rosboard.rosboard
 import rosboard.two_way_mic_http.server
 import threading
+import os
 
-def run_rosboard():
+def run_rosboard(cert_file, key_file):
     print("Running from %s" % str(rosboard.__path__))
-    rosboard.rosboard.main()
+    rosboard.rosboard.main(cert_file, key_file)
 
-def run_server():
+def run_server(cert_file, key_file):
     # execute a python script asynchronously using subprocess popen
     # https://docs.python.org/3/library/asyncio-subprocess.html
-    rosboard.two_way_mic_http.server.main(cert_file="ssl_keys/rosboard+3.pem", key_file="ssl_keys/rosboard+3-key.pem")
+    rosboard.two_way_mic_http.server.main(cert_file=cert_file, key_file=key_file)
     #process = subprocess.Popen(["python3", "rosboard/two_way_mic_http/server.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+cert_file = os.path.join(script_dir, "ssl_keys/rosboard+3.pem")
+key_file = os.path.join(script_dir, "ssl_keys/rosboard+3-key.pem")
 
-thread1 = threading.Thread(target=run_rosboard)
+print(script_dir)
+
+thread1 = threading.Thread(target=run_rosboard, args=(cert_file, key_file))
 #thread2 = threading.Thread(target=run_server)
 
 thread1.start()
 #thread2.start()
 
-run_server()
+run_server(cert_file, key_file)
 
 # Wait for the threads to finish
 thread1.join()

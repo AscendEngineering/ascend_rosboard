@@ -32,7 +32,7 @@ from rosboard.handlers import ROSBoardSocketHandler, NoCacheStaticFileHandler
 
 class ROSBoardNode(object):
     instance = None
-    def __init__(self, node_name = "rosboard_node"):
+    def __init__(self, certfile, keyfile, node_name = "rosboard_node"):
         self.__class__.instance = self
         rospy.init_node(node_name)
         self.port = rospy.get_param("~port", 8888)
@@ -83,8 +83,8 @@ class ROSBoardNode(object):
         self.tornado_application = tornado.web.Application(tornado_handlers, **tornado_settings)
 # #################################################################################
         self.http_server = tornado.httpserver.HTTPServer(self.tornado_application, ssl_options={
-            "certfile": "ssl_keys/rosboard+3.pem",
-            "keyfile": "ssl_keys/rosboard+3-key.pem",
+            "certfile": certfile,
+            "keyfile": keyfile,
         })
 ######################################
         asyncio.set_event_loop(asyncio.new_event_loop())
@@ -382,10 +382,8 @@ async def run(cmd):
         print(f'[stderr]\n{stderr.decode()}')
 
 
-def main(args=None):
-    print("HELLO")
-    print("HELLO")
-    ROSBoardNode().start()
+def main(certfile, keyfile):
+    ROSBoardNode(certfile=certfile, keyfile=keyfile).start()
 
 if __name__ == '__main__':
     main()
